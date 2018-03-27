@@ -1,10 +1,11 @@
 import sys
+import math
 from random import randint
 from BaseAI_3 import BaseAI
-import Minimax
-import Minimaxab
-from Grid import Grid
-from Displayer import Displayer
+from Grid_3 import Grid
+from Displayer_3 import Displayer
+
+
 
 class PlayerAI(BaseAI):
     def getMove(self, grid):
@@ -16,19 +17,19 @@ class PlayerAI(BaseAI):
 
         newGrid = grid.clone()
 
-        decision = alphaBeta(alpha, beta)
-        decision.maximum()
+        decision = alphaBeta(newGrid)
+        decision.maximize(newGrid, alpha, beta)
         
         return
 
 
 class alphaBeta(BaseAI):
-    def __init__(self, alpha, beta):
+    def __init__(self, grid):
+        self.grid = grid
         self.possibleNewTiles = [2, 4]
-        self.score = 0
-        self.alpha = alpha
-        self.beta = beta
-        self.depth = 5
+        self.direction = -5
+
+        self.depth = 0
 
 
     def cloneGrid(self, grid):
@@ -41,56 +42,171 @@ class alphaBeta(BaseAI):
         else:
             return self.possibleNewTiles[1]
 
+    def getScore(self):
+        return self.score
 
-    def maximum(self, grid, alpha, beta, parent):
+    def maxDepth(self):
+        if self.depth >= 5: return True
+        else: return False
+
+    def maximize(self, state, alpha, beta):
+        if self.maxDepth():
+            return (self.getHeuristicScore(state, 0))
+                    
+        self.depth += 1
         
-        if not grid.canMove():
-            #Need to fill out
+        if not state.canMove():
             return None
         
-        currentNode = node(grid, move)
-        moves = grid.getAvailableMoves()
+        moves = state.getAvailableMoves()
         
         for x in moves:
             
-            temp = cloneGrid(grid)
+            temp = self.cloneGrid(state)
             temp.move(x)
+            
+            displayer = Displayer()
+            print('PARENT: ', x, ' depth ',self.depth, displayer.display(temp), )
 
-            minValue = minimize(newGrid, a, b, x, )
+            minValue = self.minimize(temp, alpha, beta)
+
+
+            if minValue.getAB > alpha:
+                alpha = minValue.getAB
+                self.direction = m
+                
+            if not beta is float('inf'):
+                if alpha >= beta:
+                    break
+
+        return returnSequence(direction, alpha)
+            
 
     def minimize(self, grid, alpha, beta):
-        print("In Minimize")
+        self.depth += 1
         cells = grid.getAvailableCells()
         
         for x in cells:
             potential = grid.clone()
             potential.insertTile(x, self.getNewTileValue())
 
+            displayer = Displayer()
+            print('CHILD: ', displayer.display(potential))
             
-            maxValue = maximize(potential, alpha, beta, parent)
+            
+            maxValue = self.maximize(potential, alpha, beta, grid)
+            
 
-            #Set Beta
-            if self.beta > maxValue.score:
-                self.beta = maxValue.score
+            if beta > maxValue.getAB:
+                beta  = maxValue.getAB
 
-            #Test for pruning
-            elif self.beta <= self.alpha
+            if beta <= alpha:
                 break
-        return 
-            
+        print('Reached')
+        return returnSequence(direction, beta)
 
 
-            
 
 
-class node():
-    def __init__(self, state, move, parent):
-        self.state = state
-        self.move = move
-        self.point = points
+    def getHeuristicScore(self, newGrid, oldScore):
+        score = 0
+        
+        emptyWeight = 1
+        closeWeight = 0
+        orderWeight = 1
+        scoreWeight = 1
+        nearWeight = 0.6
+        cornerWeight = 2
+        
+        debug = False
+        # (1): actual score
+        addScore = 5 - oldScore
+        # print "scc " + str(addScore)
+        if addScore > 0:
+                addScore = math.log(addScore) / math.log(2)
+                
+        
+        # (2): empty fields
+        # the higher the score, the more important the empty fields
+        # highest score * available fields
+        fields = len(newGrid.getAvailableCells())
+        
+        #emptyFields = math.log(fields * newGrid.getHighestValue()) / math.log(2)
+        # (3): how close are our numbers?
+        # closescore = self.getCloseNumberScore(newGrid) 
+        # score += closescore * 0.5
+        # close = self.smoothness(newGrid) * math.log(newGrid.getHighestValue()) / math.log(2)
+        # closescore = close
+        
+        # (4): are we close to a great corner order?
+        # order = self.getOrderScore(newGrid)
+                
+# 		if corner == 0:
+# 			nearWeight *= 2
+# 			scoreWeight *= 2
+# # 		
+        
+                
+        score = addScore
+        # print directionVectors
+        
+        if debug:
+                ''''print "SCORE " + str(scoreWeight * addScore)
+                print "EMPTY " + str(emptyFields * emptyWeight)
+                # print emptyFields * emptyWeight
+                # score += emptyfields
+                #print "CLOSE " + str(closescore * closeWeight)
+                
+                print "ORDER " + str(order * orderWeight)
+                print "NEAR " + str(near * nearWeight)
+                print "CORNER " + str(corner)
+                print "last score " + str(score)
+        '''
+        #
+        return score
 
-class score():
-    def __init(self, score, move):
-        self.score = score
-        self.move = move
+
+
+class returnSequence:
+    def __init__(self, direction, ab):
+        self.direction = direction
+        self.ab = ab
+
+    def getDir(self):
+        return self.direction
+
+    def getAB(self):
+        return self.ab
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	            
+
+
 
