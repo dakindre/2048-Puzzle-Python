@@ -4,185 +4,135 @@ from random import randint
 from BaseAI_3 import BaseAI
 from Grid_3 import Grid
 from Displayer_3 import Displayer
+from copy import deepcopy
+import queue
 
-
+finalDepth = 2
 
 class PlayerAI(BaseAI):
-    def getMove(self, grid):
-        moves = grid.getAvailableCells()
-
-        #Initiate Alpha and Beta
-        alpha = float('-inf')
-        beta  = float('inf')
-
-        newGrid = grid.clone()
-
-        decision = alphaBeta(newGrid)
-        decision.maximize(newGrid, alpha, beta)
-        
-        return
-
-
-class alphaBeta(BaseAI):
-    def __init__(self, grid):
-        self.grid = grid
-        self.possibleNewTiles = [2, 4]
-        self.direction = -5
-
-        self.depth = 0
-
-
-    def cloneGrid(self, grid):
-        return grid.clone()
     
+    def getMove(self, grid):
+        alpha = scoreObject(float('-inf'), None)
+        beta = scoreObject(float('inf'), None)
 
-    def getNewTileValue(self):
-        if randint(0,99) < 100 * 0.9:
-            return self.possibleNewTiles[0]
-        else:
-            return self.possibleNewTiles[1]
+        #print('alpha ', alpha.value)
+        #print('beta ', beta.value)
 
-    def getScore(self):
-        return self.score
+        #newGrid = grid.clone()
+        #maxScore = self.alphaBeta(grid, alpha, beta, 0, None, 'max', grid)
+        maxScore = self.maximize(grid, alpha, beta, 0, None, grid)
+        
+        return maxScore.getChild()
+        
+        
+        
 
-    def maxDepth(self):
-        if self.depth >= 5: return True
+    def alphaBeta(self, grid, depth):
+        
+        if depth > finalDepth: return True
+
+        #No moves to make exit with game over
+        if not grid.canMove(): return True
+
         else: return False
-
-    def maximize(self, state, alpha, beta):
-        if self.maxDepth():
-            return (self.getHeuristicScore(state, 0))
-                    
-        self.depth += 1
         
-        if not state.canMove():
-            return None
         
-        moves = state.getAvailableMoves()
+    
+    def maximize(self, grid, alpha, beta, depth, move, parent):
+        if self.alphaBeta(grid, depth):
+            heuristic = self.eval(grid)
+            return maxMinObjects(move, heuristic)
+        
+        moves = grid.getAvailableMoves()
+        ma = maxMinObjects(None, float('-inf'))
         
         for x in moves:
+                           
+            newGrid = grid.clone()
+            newGrid.move(x)
+
+            #print('Maximize ')
+            #print('alpha [', alpha.value, '] beta [', beta.value, '] depth [', depth, ']')
+            #Displayer().display(newGrid)
             
-            temp = self.cloneGrid(state)
-            temp.move(x)
-            
-            displayer = Displayer()
-            print('PARENT: ', x, ' depth ',self.depth, displayer.display(temp), )
+            mi = self.minimize(newGrid, alpha, beta, depth+1, x, grid)
 
-            minValue = self.minimize(temp, alpha, beta)
+            if mi.getUtility() > ma.getUtility():
+                ma.child = mi.getChild()
+                ma.utility = mi.getUtility()
 
-
-            if minValue.getAB > alpha:
-                alpha = minValue.getAB
-                self.direction = m
-                
-            if not beta is float('inf'):
-                if alpha >= beta:
-                    break
-
-        return returnSequence(direction, alpha)
-            
-
-    def minimize(self, grid, alpha, beta):
-        self.depth += 1
-        cells = grid.getAvailableCells()
-        
-        for x in cells:
-            potential = grid.clone()
-            potential.insertTile(x, self.getNewTileValue())
-
-            displayer = Displayer()
-            print('CHILD: ', displayer.display(potential))
-            
-            
-            maxValue = self.maximize(potential, alpha, beta, grid)
-            
-
-            if beta > maxValue.getAB:
-                beta  = maxValue.getAB
-
-            if beta <= alpha:
+            if ma.getUtility() >= beta.getValue():
                 break
-        print('Reached')
-        return returnSequence(direction, beta)
 
+            if ma.getUtility() > alpha.getValue():
+                alpha.value = ma.getUtility()
+                alpha.move = ma.getChild
 
-
-
-    def getHeuristicScore(self, newGrid, oldScore):
-        score = 0
-        
-        emptyWeight = 1
-        closeWeight = 0
-        orderWeight = 1
-        scoreWeight = 1
-        nearWeight = 0.6
-        cornerWeight = 2
-        
-        debug = False
-        # (1): actual score
-        addScore = 5 - oldScore
-        # print "scc " + str(addScore)
-        if addScore > 0:
-                addScore = math.log(addScore) / math.log(2)
+        return ma
+                               
                 
+    def minimize(self, grid, alpha, beta, depth, move, parent):
+        if self.alphaBeta(grid, depth):
+            heuristic = self.eval(grid)
+            return maxMinObjects(move, heuristic)
         
-        # (2): empty fields
-        # the higher the score, the more important the empty fields
-        # highest score * available fields
-        fields = len(newGrid.getAvailableCells())
+        mi = maxMinObjects(None, float('inf'))
+        #print('In Min')
+        cells = grid.getAvailableCells()
+        for xy in cells:
+            
+            newGrid = grid.clone()
+            newGrid.insertTile(xy, 2)
+
+            #print('Minimize ')
+            #print('alpha [', alpha.value, '] beta [', beta.value, '] depth [', depth, ']')
+            #Displayer().display(newGrid)
+            ma = self.maximize(newGrid, alpha, beta, depth+1, move, grid)
+
+            if ma.getUtility() < mi.getUtility():
+                mi.child = ma.getChild()
+                mi.utility = ma.getUtility()
+
+            if mi.getUtility() <= alpha.getValue():
+                break
+
+            if mi.getUtility() < beta.getValue():
+                beta.value = mi.getUtility()
+                beta.value = mi.getChild()
+            
+        return mi
+
+
+    def eval(self, grid):
+        heuristic = 0
+        availableTiles = len(grid.getAvailableCells())
+        #print('available tiles', availableTiles)
+        return availableTiles
         
-        #emptyFields = math.log(fields * newGrid.getHighestValue()) / math.log(2)
-        # (3): how close are our numbers?
-        # closescore = self.getCloseNumberScore(newGrid) 
-        # score += closescore * 0.5
-        # close = self.smoothness(newGrid) * math.log(newGrid.getHighestValue()) / math.log(2)
-        # closescore = close
         
-        # (4): are we close to a great corner order?
-        # order = self.getOrderScore(newGrid)
-                
-# 		if corner == 0:
-# 			nearWeight *= 2
-# 			scoreWeight *= 2
-# # 		
-        
-                
-        score = addScore
-        # print directionVectors
-        
-        if debug:
-                ''''print "SCORE " + str(scoreWeight * addScore)
-                print "EMPTY " + str(emptyFields * emptyWeight)
-                # print emptyFields * emptyWeight
-                # score += emptyfields
-                #print "CLOSE " + str(closescore * closeWeight)
-                
-                print "ORDER " + str(order * orderWeight)
-                print "NEAR " + str(near * nearWeight)
-                print "CORNER " + str(corner)
-                print "last score " + str(score)
-        '''
-        #
-        return score
 
 
+class scoreObject:
+    def __init__(self, value, move):
+        self.value = value
+        self.move = move
 
-class returnSequence:
-    def __init__(self, direction, ab):
-        self.direction = direction
-        self.ab = ab
+    def getValue(self):
+        return self.value
 
-    def getDir(self):
-        return self.direction
+    def getMove(self):
+        return self.move
 
-    def getAB(self):
-        return self.ab
+class maxMinObjects:
+    def __init__(self, child, utility):
+        self.child = child
+        self.utility = utility
 
+    def getChild(self):
+        return self.child
 
-
-
-
-
+    def getUtility(self):
+        return self.utility
 
 
 
