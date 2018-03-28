@@ -60,9 +60,17 @@ class PlayerAI(BaseAI):
             mi = self.minimize(newGrid, alpha, beta, depth+1, x, grid)
 
             if mi.getScore() > ma.getScore():
-                #print('INMAX---Max Returned Score ', mi.getScore(), ' Min Score ',ma.getScore())
                 ma.score = mi.getScore()
                 ma.move = x
+
+            if ma.getScore() > alpha.getScore():
+                alpha.score = ma.getScore()
+                alpha.move = ma.move
+
+            if not beta.getScore() ==  float('inf'):
+                if ma.getScore() >= beta.getScore():
+                    break
+
             
         return ma
                                
@@ -86,13 +94,17 @@ class PlayerAI(BaseAI):
             #Displayer().display(newGrid)
 
             ma = self.maximize(newGrid, alpha, beta, depth+1, move, grid)
-            
 
             if ma.getScore() < mi.getScore():
-                #print('INMIN---Min Returned Score ', ma.getScore(), ' Max Score ',mi.getScore())
                 mi.score = ma.getScore()
                 mi.move = move
 
+            if mi.getScore() <beta.getScore():
+                beta.score = mi.getScore()
+                #print('Beta Score ', beta.getScore())
+
+            if mi.getScore() <= alpha.getScore():
+                break
 
         return mi
 
@@ -120,87 +132,6 @@ class maxMinObjects:
 
     def getMove(self):
         return self.move
-
-
-
-
-'''if mi.getScore() > ma.getScore():
-
-    ma.score = mi.getScore()
-    ma.move = x
-
-if ma.getScore() > alpha.getScore():
-    alpha.score = ma.getScore()
-    alpha.move = ma.move
-
-if not beta.getScore() ==  float('inf'):
-    if ma.getScore() >= beta.getScore():
-        break'''
-
-
-                               
-
-'''if alpha.getScore() < mi.getScore():
-    alpha.score = mi.getScore()
-    alpha.move = x
-
-print(beta.getScore())
-if not beta.getScore() == float('inf'):
-    print(beta.getScore())
-    if beta.getScore() <= alpha.getScore():
-        print('Max End Reached')
-        break
-
-if mi.getUtility() > ma.getUtility():
-    ma.child = mi.getChild()
-    ma.utility = mi.getUtility()
-
-if ma.getUtility() >= beta.getValue():
-    break
-
-if ma.getUtility() > alpha.getValue():
-    alpha.value = ma.getUtility()
-    alpha.move = ma.getChild'''
-
-
-
-
-'''if ma.getScore() < mi.getScore():
-    
-    mi.score = ma.getScore()
-    mi.move = move
-
-if mi.getScore() <beta.getScore():
-    beta.score = mi.getScore()
-    #print('Beta Score ', beta.getScore())
-
-if mi.getScore() <= alpha.getScore():
-    break'''
-
-'''if beta.getScore() > ma.getScore():
-    print('Should Update')
-    beta.score = ma.getScore()
-
-if beta.getScore() <= alpha.getScore():
-    print('Min End Reached')
-    break'''
-
-'''#print('Max Utility ', ma.getUtility(), ' Min Utility ', mi.getUtility())
-if ma.getUtility() < mi.getUtility():
-    #print('ma.getUtility() < mi.getUtility()')
-    mi.utility = ma.getUtility()
-    print('Max Utility ', ma.getUtility(), ' Min Utility ', mi.getUtility())
-    mi.child = ma.getChild()
-
-if mi.getUtility() <= alpha.getValue():
-    #print('mi.getUtility() <= alpha.getValue()')
-    break
-
-if mi.getUtility() < beta.getValue():
-    #print('mi.getUtility() < beta.getValue()')
-    beta.value = mi.getUtility()
-    beta.move = mi.getChild()'''
-
 
 
 
